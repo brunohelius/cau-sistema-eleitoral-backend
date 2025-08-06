@@ -1,6 +1,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using SistemaEleitoral.Application.Services;
+using SistemaEleitoral.Domain.Interfaces.Repositories;
 using SistemaEleitoral.Domain.Interfaces.Services;
+using SistemaEleitoral.Infrastructure.Repositories;
 using SistemaEleitoral.Infrastructure.Services;
 
 namespace SistemaEleitoral.Api.Configuration
@@ -21,6 +23,7 @@ namespace SistemaEleitoral.Api.Configuration
             services.AddScoped<IValidacaoElegibilidadeService, ValidacaoElegibilidadeService>();
             services.AddScoped<IDenunciaService, DenunciaService>();
             services.AddScoped<IImpugnacaoService, ImpugnacaoService>();
+            services.AddScoped<IImpugnacaoResultadoService, ImpugnacaoResultadoService>();
             services.AddScoped<IJulgamentoService, JulgamentoService>();
             services.AddScoped<IRecursoService, RecursoService>();
             services.AddScoped<ISubstituicaoService, SubstituicaoService>();
@@ -59,8 +62,10 @@ namespace SistemaEleitoral.Api.Configuration
         
         public static IServiceCollection AddRepositories(this IServiceCollection services)
         {
-            // Adicionar repositórios se usar padrão Repository
-            // Por enquanto estamos usando EF Core diretamente nos services
+            // Repositórios específicos
+            services.AddScoped<IImpugnacaoResultadoRepository, ImpugnacaoResultadoRepository>();
+            
+            // Adicionar outros repositórios conforme necessário
             
             return services;
         }

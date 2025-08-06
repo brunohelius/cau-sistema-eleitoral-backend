@@ -40,6 +40,12 @@ namespace SistemaEleitoral.Infrastructure.Data
     public DbSet<PedidoImpugnacao> PedidosImpugnacao { get; set; }
         public DbSet<PedidoImpugnacaoDefesa> PedidosImpugnacaoDefesas { get; set; }
         public DbSet<PedidoImpugnacaoDocumento> PedidosImpugnacaoDocumentos { get; set; }
+        public DbSet<ImpugnacaoResultado> ImpugnacoesResultado { get; set; }
+        public DbSet<AlegacaoImpugnacaoResultado> AlegacoesImpugnacaoResultado { get; set; }
+        public DbSet<RecursoImpugnacaoResultado> RecursosImpugnacaoResultado { get; set; }
+        public DbSet<ContrarrazaoImpugnacaoResultado> ContrarrazoesImpugnacaoResultado { get; set; }
+        public DbSet<JulgamentoAlegacaoImpugResultado> JulgamentosAlegacaoImpugResultado { get; set; }
+        public DbSet<JulgamentoRecursoImpugResultado> JulgamentosRecursoImpugResultado { get; set; }
 
         // Votação
         public DbSet<SessaoVotacao> SessoesVotacao { get; set; }
