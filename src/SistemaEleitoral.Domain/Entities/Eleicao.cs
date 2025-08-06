@@ -1,120 +1,136 @@
 using System;
 using System.Collections.Generic;
-using SistemaEleitoral.Domain.Common;
-using SistemaEleitoral.Domain.Enums;
-using SistemaEleitoral.Domain.Exceptions;
 
 namespace SistemaEleitoral.Domain.Entities
 {
-    public class Eleicao : AuditableEntity
+    /// <summary>
+    /// Entidade que representa uma eleição no sistema
+    /// </summary>
+    public class Eleicao : BaseEntity
     {
-        public int Id { get; set; }
-        public string Codigo { get; set; }
-        public string Nome { get; set; }
+        public string Titulo { get; set; }
         public string Descricao { get; set; }
         public int Ano { get; set; }
-        public StatusEleicao Status { get; set; } = StatusEleicao.Planejada;
+        public TipoEleicao TipoEleicao { get; set; }
+        public StatusEleicao Status { get; set; }
+        
+        // Datas importantes
         public DateTime DataInicio { get; set; }
         public DateTime DataFim { get; set; }
-        public DateTime? DataVotacaoInicio { get; set; }
-        public DateTime? DataVotacaoFim { get; set; }
-        public DateTime? DataPosse { get; set; }
-        public string ResolucaoNormativa { get; set; }
-        public string ConfiguracaoJson { get; set; }
-        public bool PermiteVotoOnline { get; set; } = true;
-        public bool PermiteVotoPresencial { get; set; } = false;
-        public int? TotalEleitores { get; set; }
-        public int? TotalVotantes { get; set; }
-        public decimal? PercentualParticipacao { get; set; }
-        public DateTime? DataHomologacao { get; set; }
-        public string MotivoAnulacao { get; set; }
+        public DateTime DataInicioInscricao { get; set; }
+        public DateTime DataFimInscricao { get; set; }
+        public DateTime DataInicioVotacao { get; set; }
+        public DateTime DataFimVotacao { get; set; }
+        public DateTime DataApuracao { get; set; }
+        public DateTime DataPosse { get; set; }
         
-        // Navigation Properties
-        public virtual ICollection<CalendarioEleitoral> Calendarios { get; set; } = new List<CalendarioEleitoral>();
-        public virtual ICollection<ChapaEleicao> Chapas { get; set; } = new List<ChapaEleicao>();
-        public virtual ICollection<ComissaoEleitoral> Comissoes { get; set; } = new List<ComissaoEleitoral>();
-        public virtual ICollection<Denuncia> Denuncias { get; set; } = new List<Denuncia>();
-
-        // Business Methods
-        public void IniciarEleicao()
+        // Configurações
+        public int NumeroVagas { get; set; }
+        public int NumeroSuplentes { get; set; }
+        public decimal QuorumMinimo { get; set; }
+        public bool PermiteReeleicao { get; set; }
+        public int MandatoAnos { get; set; }
+        
+        // Relacionamentos
+        public int? FilialId { get; set; }
+        public virtual Filial Filial { get; set; }
+        
+        public int CalendarioId { get; set; }
+        public virtual Calendario Calendario { get; set; }
+        
+        public virtual ICollection<ChapaEleicao> Chapas { get; set; }
+        public virtual ICollection<ComissaoEleitoral> ComissaoEleitoral { get; set; }
+        public virtual ICollection<DocumentoEleicao> Documentos { get; set; }
+        
+        public Eleicao()
         {
-            if (Status != StatusEleicao.Planejada)
-                throw new BusinessException("Eleição não está em status planejado");
-
-            Status = StatusEleicao.Ativa;
+            Status = StatusEleicao.Planejamento;
+            Chapas = new HashSet<ChapaEleicao>();
+            ComissaoEleitoral = new HashSet<ComissaoEleitoral>();
+            Documentos = new HashSet<DocumentoEleicao>();
         }
-
-        public void IniciarVotacao()
+        
+        public bool PodeInscreverChapa()
         {
-            if (Status != StatusEleicao.Ativa)
-                throw new BusinessException("Eleição deve estar ativa para iniciar votação");
-
-            if (DateTime.Now < DataVotacaoInicio)
-                throw new BusinessException("Ainda não chegou o período de votação");
-
-            Status = StatusEleicao.EmAndamento;
+            return Status == StatusEleicao.InscricoesAbertas && 
+                   DateTime.Now >= DataInicioInscricao && 
+                   DateTime.Now <= DataFimInscricao;
         }
-
-        public void EncerrarVotacao()
+        
+        public bool PodeVotar()
         {
-            if (Status != StatusEleicao.EmAndamento)
-                throw new BusinessException("Votação não está em andamento");
-
-            Status = StatusEleicao.Encerrada;
-            CalcularPercentualParticipacao();
+            return Status == StatusEleicao.VotacaoAberta && 
+                   DateTime.Now >= DataInicioVotacao && 
+                   DateTime.Now <= DataFimVotacao;
         }
-
-        public void HomologarEleicao()
+        
+        public void AbrirInscricoes()
         {
-            if (Status != StatusEleicao.Encerrada)
-                throw new BusinessException("Eleição deve estar encerrada para ser homologada");
-
-            Status = StatusEleicao.Homologada;
-            DataHomologacao = DateTime.UtcNow;
+            if (Status != StatusEleicao.Planejamento)
+                throw new InvalidOperationException("Eleição deve estar em planejamento para abrir inscrições");
+                
+            Status = StatusEleicao.InscricoesAbertas;
         }
-
-        public void AnularEleicao(string motivo)
+        
+        public void FecharInscricoes()
         {
-            if (Status == StatusEleicao.Anulada)
-                throw new BusinessException("Eleição já está anulada");
-
-            Status = StatusEleicao.Anulada;
-            MotivoAnulacao = motivo;
+            if (Status != StatusEleicao.InscricoesAbertas)
+                throw new InvalidOperationException("Inscrições devem estar abertas para serem fechadas");
+                
+            Status = StatusEleicao.InscricoesFechadas;
         }
-
-        public void CancelarEleicao(string motivo)
+        
+        public void AbrirVotacao()
         {
-            if (Status == StatusEleicao.Homologada)
-                throw new BusinessException("Eleição homologada não pode ser cancelada");
-
-            Status = StatusEleicao.Cancelada;
-            MotivoAnulacao = motivo;
+            if (Status != StatusEleicao.InscricoesFechadas)
+                throw new InvalidOperationException("Inscrições devem estar fechadas para abrir votação");
+                
+            Status = StatusEleicao.VotacaoAberta;
         }
-
-        private void CalcularPercentualParticipacao()
+        
+        public void FecharVotacao()
         {
-            if (TotalEleitores.HasValue && TotalVotantes.HasValue && TotalEleitores.Value > 0)
-            {
-                PercentualParticipacao = (decimal)TotalVotantes.Value / TotalEleitores.Value * 100;
-            }
+            if (Status != StatusEleicao.VotacaoAberta)
+                throw new InvalidOperationException("Votação deve estar aberta para ser fechada");
+                
+            Status = StatusEleicao.VotacaoFechada;
         }
-
-        public bool EstaEmPeriodoEleitoral()
+        
+        public void IniciarApuracao()
         {
-            var agora = DateTime.Now;
-            return agora >= DataInicio && agora <= DataFim;
+            if (Status != StatusEleicao.VotacaoFechada)
+                throw new InvalidOperationException("Votação deve estar fechada para iniciar apuração");
+                
+            Status = StatusEleicao.EmApuracao;
         }
-
-        public bool EstaEmPeriodoVotacao()
+        
+        public void Finalizar()
         {
-            var agora = DateTime.Now;
-            return DataVotacaoInicio.HasValue && DataVotacaoFim.HasValue &&
-                   agora >= DataVotacaoInicio.Value && agora <= DataVotacaoFim.Value;
+            if (Status != StatusEleicao.EmApuracao)
+                throw new InvalidOperationException("Eleição deve estar em apuração para ser finalizada");
+                
+            Status = StatusEleicao.Finalizada;
         }
-
-        public string GerarCodigo()
-        {
-            return $"ELE{Ano}{Id:D4}";
-        }
+    }
+    
+    public enum TipoEleicao
+    {
+        ConselhoFederal = 1,
+        ConselhoEstadual = 2,
+        ComissaoEtica = 3,
+        ComissaoEnsino = 4,
+        DiretoriaRegional = 5
+    }
+    
+    public enum StatusEleicao
+    {
+        Planejamento = 1,
+        InscricoesAbertas = 2,
+        InscricoesFechadas = 3,
+        VotacaoAberta = 4,
+        VotacaoFechada = 5,
+        EmApuracao = 6,
+        Finalizada = 7,
+        Cancelada = 8
     }
 }

@@ -1,153 +1,138 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using SistemaEleitoral.Domain.Common;
-using SistemaEleitoral.Domain.Enums;
-using SistemaEleitoral.Domain.Exceptions;
 
 namespace SistemaEleitoral.Domain.Entities
 {
+    /// <summary>
+    /// Entidade que representa uma chapa candidata em uma eleição
+    /// </summary>
     public class ChapaEleicao : BaseEntity
     {
-        public new int Id { get; set; }
         public int EleicaoId { get; set; }
-        public string Nome { get; set; }
-        public string Numero { get; set; }
-        public SistemaEleitoral.Domain.Enums.StatusChapa Status { get; set; } = SistemaEleitoral.Domain.Enums.StatusChapa.EmElaboracao;
-        public TipoChapa TipoChapa { get; set; } = TipoChapa.Nacional;
-        public DateTime? DataSubmissao { get; set; }
-        public DateTime? DataConfirmacao { get; set; }
-        public DateTime? DataHomologacao { get; set; }
-        public string MotivoRejeicao { get; set; }
-        public int? InstituicaoEnsinoId { get; set; }
-        public string UfChapa { get; set; }
-        public bool DiversidadeGenero { get; set; }
-        public bool DiversidadeEtnica { get; set; }
-        public bool DiversidadeLGBTQI { get; set; }
-        public bool DiversidadeDeficiencia { get; set; }
-        public string DiversidadeJson { get; set; }
-        public int TotalMembros => MembrosChapa?.Count ?? 0;
-        public bool PossuiCoordenador => MembrosChapa?.Any(m => m.TipoMembro == TipoMembroChapa.Coordenador) ?? false;
-        
-        // Navigation Properties
         public virtual Eleicao Eleicao { get; set; }
-        public virtual ICollection<MembroChapa> MembrosChapa { get; set; } = new List<MembroChapa>();
-        public virtual ICollection<Impugnacao> Impugnacoes { get; set; } = new List<Impugnacao>();
-        public virtual ICollection<ProcessoSubstituicao> ProcessosSubstituicao { get; set; } = new List<ProcessoSubstituicao>();
-        public virtual ICollection<DocumentoEleitoral> Documentos { get; set; } = new List<DocumentoEleitoral>();
-
-        // Business Methods
-        public bool PodeAdicionarMembro()
+        
+        public int Numero { get; set; }
+        public string Nome { get; set; }
+        public string Slogan { get; set; }
+        public string PropostaResumo { get; set; }
+        public string PropostaCompleta { get; set; }
+        public string FotoUrl { get; set; }
+        
+        public StatusChapa Status { get; set; }
+        public DateTime DataInscricao { get; set; }
+        public DateTime? DataHomologacao { get; set; }
+        public string MotivoIndeferimento { get; set; }
+        
+        // Votos
+        public int TotalVotos { get; set; }
+        public decimal PercentualVotos { get; set; }
+        public int Classificacao { get; set; }
+        public bool Eleita { get; set; }
+        
+        // Relacionamentos
+        public virtual ICollection<MembroChapa> Membros { get; set; }
+        public virtual ICollection<DocumentoChapa> Documentos { get; set; }
+        public virtual ICollection<ImpugnacaoChapa> Impugnacoes { get; set; }
+        public virtual ICollection<VotoEleicao> Votos { get; set; }
+        
+        public ChapaEleicao()
         {
-            return Status == SistemaEleitoral.Domain.Enums.StatusChapa.EmElaboracao && TotalMembros < GetLimiteMembros();
+            Status = StatusChapa.PendenteAnalise;
+            DataInscricao = DateTime.Now;
+            TotalVotos = 0;
+            PercentualVotos = 0;
+            Membros = new HashSet<MembroChapa>();
+            Documentos = new HashSet<DocumentoChapa>();
+            Impugnacoes = new HashSet<ImpugnacaoChapa>();
+            Votos = new HashSet<VotoEleicao>();
         }
-
-        public bool PodeSubmeterParaAprovacao()
+        
+        public void AdicionarMembro(MembroChapa membro)
         {
-            return Status == SistemaEleitoral.Domain.Enums.StatusChapa.EmElaboracao && 
-                   PossuiCoordenador && 
-                   TotalMembros >= GetMinimoMembros() &&
-                   ValidaDiversidade() &&
-                   TodosMembrosSaoElegiveis();
-        }
-
-        public void SubmeterParaAprovacao()
-        {
-            if (!PodeSubmeterParaAprovacao())
-                throw new BusinessException("Chapa não atende aos requisitos para submissão");
+            if (Status != StatusChapa.PendenteAnalise && Status != StatusChapa.EmCorrecao)
+                throw new InvalidOperationException("Não é possível adicionar membros após homologação");
                 
-            Status = SistemaEleitoral.Domain.Enums.StatusChapa.AguardandoAprovacao;
-            DataSubmissao = DateTime.UtcNow;
-            Numero = GerarNumeroChapa();
+            Membros.Add(membro);
         }
-
-        public void AprovarChapa(string aprovadorId)
+        
+        public void RemoverMembro(int membroId)
         {
-            if (Status != SistemaEleitoral.Domain.Enums.StatusChapa.AguardandoAprovacao)
-                throw new BusinessException("Chapa não está aguardando aprovação");
+            if (Status != StatusChapa.PendenteAnalise && Status != StatusChapa.EmCorrecao)
+                throw new InvalidOperationException("Não é possível remover membros após homologação");
                 
-            Status = SistemaEleitoral.Domain.Enums.StatusChapa.Aprovada;
-            DataConfirmacao = DateTime.UtcNow;
-            UpdatedBy = aprovadorId;
+            var membro = Membros.FirstOrDefault(m => m.Id == membroId);
+            if (membro != null)
+                Membros.Remove(membro);
         }
-
-        public void RejeitarChapa(string motivo, string rejeitadorId)
+        
+        public void Homologar()
         {
-            if (Status != SistemaEleitoral.Domain.Enums.StatusChapa.AguardandoAprovacao)
-                throw new BusinessException("Chapa não está aguardando aprovação");
+            if (Status != StatusChapa.PendenteAnalise)
+                throw new InvalidOperationException("Chapa deve estar pendente de análise para ser homologada");
                 
-            Status = SistemaEleitoral.Domain.Enums.StatusChapa.Rejeitada;
-            MotivoRejeicao = motivo;
-            UpdatedBy = rejeitadorId;
+            Status = StatusChapa.Homologada;
+            DataHomologacao = DateTime.Now;
         }
-
-        public void HomologarChapa(string homologadorId)
+        
+        public void Indeferir(string motivo)
         {
-            if (Status != SistemaEleitoral.Domain.Enums.StatusChapa.Aprovada)
-                throw new BusinessException("Chapa deve estar aprovada para ser homologada");
+            if (Status != StatusChapa.PendenteAnalise)
+                throw new InvalidOperationException("Chapa deve estar pendente de análise para ser indeferida");
                 
-            Status = SistemaEleitoral.Domain.Enums.StatusChapa.Homologada;
-            DataHomologacao = DateTime.UtcNow;
-            UpdatedBy = homologadorId;
+            Status = StatusChapa.Indeferida;
+            MotivoIndeferimento = motivo;
         }
-
-        public void ImpugnarChapa()
+        
+        public void SolicitarCorrecao(string motivo)
         {
-            if (Status != SistemaEleitoral.Domain.Enums.StatusChapa.Aprovada && Status != SistemaEleitoral.Domain.Enums.StatusChapa.Homologada)
-                throw new BusinessException("Apenas chapas aprovadas ou homologadas podem ser impugnadas");
+            if (Status != StatusChapa.PendenteAnalise)
+                throw new InvalidOperationException("Chapa deve estar pendente de análise");
                 
-            Status = SistemaEleitoral.Domain.Enums.StatusChapa.Impugnada;
+            Status = StatusChapa.EmCorrecao;
+            MotivoIndeferimento = motivo;
         }
-
-        private int GetLimiteMembros()
+        
+        public void ReenviarParaAnalise()
         {
-            return TipoChapa switch
-            {
-                TipoChapa.Nacional => 5,
-                TipoChapa.Estadual => 3,
-                TipoChapa.IES => 10,
-                _ => 5
-            };
+            if (Status != StatusChapa.EmCorrecao)
+                throw new InvalidOperationException("Chapa deve estar em correção");
+                
+            Status = StatusChapa.PendenteAnalise;
+            MotivoIndeferimento = null;
         }
-
-        private int GetMinimoMembros()
+        
+        public void Impugnar(string motivo)
         {
-            return TipoChapa switch
-            {
-                TipoChapa.Nacional => 5,
-                TipoChapa.Estadual => 3,
-                TipoChapa.IES => 3,
-                _ => 3
-            };
+            if (Status != StatusChapa.Homologada)
+                throw new InvalidOperationException("Apenas chapas homologadas podem ser impugnadas");
+                
+            Status = StatusChapa.Impugnada;
+            MotivoIndeferimento = motivo;
         }
-
-        private bool ValidaDiversidade()
+        
+        public bool PodeRecurso()
         {
-            var membrosAtivos = MembrosChapa.Where(m => m.Status == StatusMembroChapa.Ativo).ToList();
-            
-            // Gender diversity requirement (minimum 30% of any gender)
-            var totalMulheres = membrosAtivos.Count(m => m.Genero == "F");
-            var totalHomens = membrosAtivos.Count(m => m.Genero == "M");
-            var percentualMinimo = Math.Ceiling(membrosAtivos.Count * 0.3);
-            
-            DiversidadeGenero = totalMulheres >= percentualMinimo || totalHomens >= percentualMinimo;
-            
-            // Check other diversity criteria
-            DiversidadeEtnica = membrosAtivos.Any(m => m.Etnia != "Branco");
-            DiversidadeLGBTQI = membrosAtivos.Any(m => m.LGBTQI);
-            DiversidadeDeficiencia = membrosAtivos.Any(m => m.PossuiDeficiencia);
-            
-            return DiversidadeGenero;
+            return Status == StatusChapa.Indeferida || Status == StatusChapa.Impugnada;
         }
-
-        private bool TodosMembrosSaoElegiveis()
+        
+        public void AtualizarVotacao(int votos, int totalVotosEleicao)
         {
-            return MembrosChapa.All(m => m.Status == StatusMembroChapa.Ativo && m.Elegivel);
+            TotalVotos = votos;
+            if (totalVotosEleicao > 0)
+                PercentualVotos = (decimal)votos / totalVotosEleicao * 100;
         }
-
-        private string GerarNumeroChapa()
-        {
-            return $"{EleicaoId:D4}{DataSubmissao:yyyyMMddHHmmss}";
-        }
+    }
+    
+    public enum StatusChapa
+    {
+        PendenteAnalise = 1,
+        EmCorrecao = 2,
+        Homologada = 3,
+        Indeferida = 4,
+        Impugnada = 5,
+        Desistente = 6,
+        Eleita = 7,
+        NaoEleita = 8
     }
 }
