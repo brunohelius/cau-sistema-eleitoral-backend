@@ -7,9 +7,9 @@ using SistemaEleitoral.Domain.Exceptions;
 
 namespace SistemaEleitoral.Domain.Entities
 {
-    public class ChapaEleicao : AuditableEntity
+    public class ChapaEleicao : BaseEntity
     {
-        public int Id { get; set; }
+        public new int Id { get; set; }
         public int EleicaoId { get; set; }
         public string Nome { get; set; }
         public string Numero { get; set; }

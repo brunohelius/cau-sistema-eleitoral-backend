@@ -57,32 +57,53 @@ SistemaEleitoral/
 
 ### Setup Local
 
-1. Clone o repositório:
+1. Navegue até o diretório do projeto:
 ```bash
-git clone https://github.com/brunozexter/cau-sistema-eleitoral-backend.git
-cd cau-sistema-eleitoral-backend
+cd /Users/brunosouza/Documents/Development/AI\ POC/eleitoral-react-net-v2/backend
 ```
 
-2. Configure o banco de dados:
+2. Restaurar dependências:
 ```bash
-# Crie o banco de dados
-createdb sistema_eleitoral
+dotnet restore
+```
 
+3. Configurar banco de dados:
+```bash
 # Configure a connection string em appsettings.json
+# Padrão: PostgreSQL local na porta 5432
 ```
 
-3. Execute as migrations:
+4. Executar migrations:
 ```bash
-cd src/SistemaEleitoral.Api
-dotnet ef database update
+dotnet ef migrations add InitialCreate -p src/SistemaEleitoral.Infrastructure -s src/SistemaEleitoral.API
+dotnet ef database update -p src/SistemaEleitoral.Infrastructure -s src/SistemaEleitoral.API
 ```
 
-4. Execute o projeto:
+5. Executar o projeto:
 ```bash
-dotnet run
+dotnet run --project src/SistemaEleitoral.API
 ```
 
-A API estará disponível em: https://localhost:5001
+A API estará disponível em: http://localhost:5000
+
+### 📋 Informações do Projeto
+
+#### 🗂️ **Localização**
+- **Caminho**: `/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend`
+- **Tipo**: Backend .NET Core API
+- **Porta**: 5000 (HTTP) / 5001 (HTTPS)
+
+#### 👤 **Usuário Administrativo**
+- **Username**: `brunohelius`
+- **Email**: `brunohelius@gmail.com`
+- **Role**: `Administrator`
+- **JWT Claims**: `admin`, `election_manager`, `judge`, `system_config`
+
+#### 🔗 **Compilação Status**
+- **Build**: ✅ Sucesso (todas as dependências resolvidas)
+- **Entidades**: ✅ 5+ entidades essenciais criadas
+- **Repositories**: ✅ Estrutura corrigida
+- **Services**: ✅ Configurações JWT/Auth implementadas
 
 ### Setup com Docker
 

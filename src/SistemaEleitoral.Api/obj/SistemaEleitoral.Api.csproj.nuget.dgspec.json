@@ -324,7 +324,7 @@
             },
             "MailKit": {
               "target": "Package",
-              "version": "[4.8.0, )"
+              "version": "[4.7.0, )"
             },
             "Microsoft.AspNetCore.Authorization": {
               "target": "Package",
@@ -358,7 +358,7 @@
             },
             "MimeKit": {
               "target": "Package",
-              "version": "[4.8.0, )"
+              "version": "[4.7.0, )"
             },
             "Npgsql.EntityFrameworkCore.PostgreSQL": {
               "target": "Package",

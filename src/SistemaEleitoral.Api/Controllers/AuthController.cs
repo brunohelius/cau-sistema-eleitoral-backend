@@ -1,461 +1,141 @@
-using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Security.Claims;
-using SistemaEleitoral.Application.DTOs.Authentication;
-using SistemaEleitoral.Application.Services;
+using Microsoft.AspNetCore.Mvc;
+using SistemaEleitoral.Application.DTOs.Auth;
+using SistemaEleitoral.Application.Interfaces;
 
-namespace SistemaEleitoral.Api.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-[EnableRateLimiting("AuthPolicy")]
-public class AuthController : ControllerBase
+namespace SistemaEleitoral.Api.Controllers
 {
-    private readonly IAuthService _authService;
-    private readonly IJwtService _jwtService;
-    private readonly ILogger<AuthController> _logger;
-
-    public AuthController(
-        IAuthService authService,
-        IJwtService jwtService,
-        ILogger<AuthController> logger)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AuthController : ControllerBase
     {
-        _authService = authService;
-        _jwtService = jwtService;
-        _logger = logger;
-    }
+        private readonly IAuthService _authService;
 
-    /// <summary>
-    /// Realiza login com email e senha
-    /// </summary>
-    [HttpPost("login")]
-    [EnableRateLimiting("LoginPolicy")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
-    {
-        try
+        public AuthController(IAuthService authService)
         {
-            // Adicionar informações da requisição
-            loginDto.EnderecoIp = ObterEnderecoIp();
-            loginDto.UserAgent = ObterUserAgent();
+            _authService = authService;
+        }
 
-            var result = await _authService.LoginAsync(loginDto);
-            
-            if (result == null)
+        /// <summary>
+        /// Realiza o login do usuário
+        /// </summary>
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
+        {
+            try
             {
-                return BadRequest(new { 
-                    message = "Credenciais inválidas ou conta bloqueada",
-                    success = false 
-                });
+                var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+                var userAgent = Request.Headers["User-Agent"].ToString();
+                
+                var response = await _authService.LoginAsync(request, ipAddress, userAgent);
+                return Ok(response);
             }
-
-            // Log de sucesso (sem dados sensíveis)
-            _logger.LogInformation("Login realizado com sucesso para {Email} de {IP}", 
-                loginDto.Email, loginDto.EnderecoIp);
-
-            return Ok(new { 
-                data = result,
-                success = true,
-                message = "Login realizado com sucesso"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante processo de login");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
-
-    /// <summary>
-    /// Realiza login com token do sistema CAU
-    /// </summary>
-    [HttpPost("login-cau")]
-    [EnableRateLimiting("LoginPolicy")]
-    [AllowAnonymous]
-    public async Task<IActionResult> LoginCAU([FromBody] LoginCAUDto loginDto)
-    {
-        try
-        {
-            loginDto.EnderecoIp = ObterEnderecoIp();
-            loginDto.UserAgent = ObterUserAgent();
-
-            var result = await _authService.LoginCAUAsync(loginDto);
-            
-            if (result == null)
+            catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { 
-                    message = "Token CAU inválido ou expirado",
-                    success = false 
-                });
+                return Unauthorized(new { message = ex.Message });
             }
-
-            return Ok(new { 
-                data = result,
-                success = true,
-                message = "Login CAU realizado com sucesso"
-            });
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante login CAU");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
 
-    /// <summary>
-    /// Renova o token de acesso usando refresh token
-    /// </summary>
-    [HttpPost("refresh")]
-    [EnableRateLimiting("RefreshPolicy")]
-    [AllowAnonymous]
-    public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshTokenDto)
-    {
-        try
+        /// <summary>
+        /// Realiza o logout do usuário
+        /// </summary>
+        [HttpPost("logout")]
+        [Authorize]
+        public async Task<IActionResult> Logout()
         {
-            refreshTokenDto.EnderecoIp = ObterEnderecoIp();
-            refreshTokenDto.UserAgent = ObterUserAgent();
-
-            var result = await _authService.RefreshTokenAsync(refreshTokenDto);
+            var usuarioId = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "0");
+            var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
+            var userAgent = Request.Headers["User-Agent"].ToString();
             
-            if (result == null)
+            await _authService.LogoutAsync(usuarioId, ipAddress, userAgent);
+            return Ok(new { message = "Logout realizado com sucesso" });
+        }
+
+        /// <summary>
+        /// Solicita recuperação de senha
+        /// </summary>
+        [HttpPost("recuperar-senha")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RecuperarSenha([FromBody] RecuperarSenhaDto request)
+        {
+            await _authService.RecuperarSenhaAsync(request.Email);
+            return Ok(new { message = "Se o email existir em nossa base, você receberá as instruções de recuperação" });
+        }
+
+        /// <summary>
+        /// Redefine a senha usando token de recuperação
+        /// </summary>
+        [HttpPost("redefinir-senha")]
+        [AllowAnonymous]
+        public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaDto request)
+        {
+            try
             {
-                return Unauthorized(new { 
-                    message = "Refresh token inválido ou expirado",
-                    success = false 
-                });
+                await _authService.RedefinirSenhaAsync(request);
+                return Ok(new { message = "Senha redefinida com sucesso" });
             }
-
-            return Ok(new { 
-                data = result,
-                success = true,
-                message = "Token renovado com sucesso"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante renovação de token");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
-
-    /// <summary>
-    /// Realiza logout do usuário atual
-    /// </summary>
-    [HttpPost("logout")]
-    [Authorize]
-    public async Task<IActionResult> Logout([FromBody] LogoutDto? logoutDto = null)
-    {
-        try
-        {
-            var usuarioId = ObterUsuarioId();
-            
-            logoutDto ??= new LogoutDto();
-            logoutDto.EnderecoIp = ObterEnderecoIp();
-            logoutDto.UserAgent = ObterUserAgent();
-
-            var result = await _authService.LogoutAsync(usuarioId, logoutDto);
-            
-            if (!result)
+            catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { 
-                    message = "Erro durante logout",
-                    success = false 
-                });
+                return BadRequest(new { message = ex.Message });
             }
+        }
 
-            // Revogar o refresh token se fornecido
-            var refreshToken = Request.Headers["Refresh-Token"].FirstOrDefault();
-            if (!string.IsNullOrEmpty(refreshToken))
+        /// <summary>
+        /// Altera a senha do usuário autenticado
+        /// </summary>
+        [HttpPost("alterar-senha")]
+        [Authorize]
+        public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaDto request)
+        {
+            try
             {
-                await _authService.RevogarRefreshTokenAsync(refreshToken);
+                var usuarioId = int.Parse(User.FindFirst("NameIdentifier")?.Value ?? "0");
+                await _authService.AlterarSenhaAsync(usuarioId, request);
+                return Ok(new { message = "Senha alterada com sucesso" });
             }
-
-            return Ok(new { 
-                success = true,
-                message = "Logout realizado com sucesso"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante logout");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
-
-    /// <summary>
-    /// Altera a senha do usuário atual
-    /// </summary>
-    [HttpPost("alterar-senha")]
-    [Authorize]
-    public async Task<IActionResult> AlterarSenha([FromBody] AlterarSenhaDto alterarSenhaDto)
-    {
-        try
-        {
-            var usuarioId = ObterUsuarioId();
-            
-            var result = await _authService.AlterarSenhaAsync(usuarioId, alterarSenhaDto);
-            
-            if (!result)
+            catch (UnauthorizedAccessException ex)
             {
-                return BadRequest(new { 
-                    message = "Senha atual incorreta",
-                    success = false 
-                });
+                return BadRequest(new { message = ex.Message });
             }
-
-            return Ok(new { 
-                success = true,
-                message = "Senha alterada com sucesso"
-            });
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// Valida se o token JWT ainda é válido
+        /// </summary>
+        [HttpGet("validar-token")]
+        [Authorize]
+        public IActionResult ValidarToken()
         {
-            _logger.LogError(ex, "Erro durante alteração de senha");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
+            return Ok(new 
+            { 
+                valid = true,
+                usuario = new
+                {
+                    id = User.FindFirst("NameIdentifier")?.Value,
+                    nome = User.FindFirst("Name")?.Value,
+                    email = User.FindFirst("Email")?.Value,
+                    tipoUsuario = User.FindFirst("TipoUsuario")?.Value
+                }
             });
         }
     }
-
-    /// <summary>
-    /// Inicia processo de recuperação de senha
-    /// </summary>
-    [HttpPost("recuperar-senha")]
-    [EnableRateLimiting("RecoveryPolicy")]
-    [AllowAnonymous]
-    public async Task<IActionResult> RecuperarSenha([FromBody] RecuperarSenhaDto recuperarSenhaDto)
+    
+    public class RecuperarSenhaDto
     {
-        try
-        {
-            // Sempre retorna sucesso por questões de segurança (não revelar se email existe)
-            await _authService.IniciarRecuperacaoSenhaAsync(recuperarSenhaDto);
-            
-            return Ok(new { 
-                success = true,
-                message = "Se o email existir em nossa base, você receberá instruções para redefinir sua senha"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante recuperação de senha");
-            return Ok(new { 
-                success = true,
-                message = "Se o email existir em nossa base, você receberá instruções para redefinir sua senha"
-            });
-        }
+        public string Email { get; set; }
     }
-
-    /// <summary>
-    /// Redefine senha usando token de recuperação
-    /// </summary>
-    [HttpPost("redefinir-senha")]
-    [EnableRateLimiting("RecoveryPolicy")]
-    [AllowAnonymous]
-    public async Task<IActionResult> RedefinirSenha([FromBody] RedefinirSenhaDto redefinirSenhaDto)
+    
+    public class RedefinirSenhaDto
     {
-        try
-        {
-            var result = await _authService.RedefinirSenhaAsync(redefinirSenhaDto);
-            
-            if (!result)
-            {
-                return BadRequest(new { 
-                    message = "Token inválido ou expirado",
-                    success = false 
-                });
-            }
-
-            return Ok(new { 
-                success = true,
-                message = "Senha redefinida com sucesso"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante redefinição de senha");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
+        public string Token { get; set; }
+        public string NovaSenha { get; set; }
     }
-
-    /// <summary>
-    /// Obtém informações do usuário atual
-    /// </summary>
-    [HttpGet("me")]
-    [Authorize]
-    public async Task<IActionResult> Me()
+    
+    public class AlterarSenhaDto
     {
-        try
-        {
-            var usuarioId = ObterUsuarioId();
-            
-            var userInfo = await _authService.ObterInformacoesUsuarioAsync(usuarioId);
-            
-            if (userInfo == null)
-            {
-                return NotFound(new { 
-                    message = "Usuário não encontrado",
-                    success = false 
-                });
-            }
-
-            return Ok(new { 
-                data = userInfo,
-                success = true
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao obter informações do usuário");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
+        public string SenhaAtual { get; set; }
+        public string NovaSenha { get; set; }
     }
-
-    /// <summary>
-    /// Verifica se o token atual está válido
-    /// </summary>
-    [HttpGet("validate")]
-    [Authorize]
-    public async Task<IActionResult> ValidateToken()
-    {
-        try
-        {
-            var jwtId = User.FindFirst("jti")?.Value;
-            
-            if (string.IsNullOrEmpty(jwtId))
-            {
-                return Unauthorized(new { 
-                    message = "Token inválido",
-                    success = false 
-                });
-            }
-
-            var sessaoAtiva = await _authService.SessaoAtivaAsync(jwtId);
-            
-            if (!sessaoAtiva)
-            {
-                return Unauthorized(new { 
-                    message = "Sessão expirada",
-                    success = false 
-                });
-            }
-
-            return Ok(new { 
-                success = true,
-                message = "Token válido",
-                expiresAt = _jwtService.ObterDataExpiracao(ObterTokenAtual())
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro durante validação de token");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
-
-    /// <summary>
-    /// Revoga todos os refresh tokens do usuário atual
-    /// </summary>
-    [HttpPost("revoke-all")]
-    [Authorize]
-    public async Task<IActionResult> RevokeAllTokens()
-    {
-        try
-        {
-            var usuarioId = ObterUsuarioId();
-            
-            var result = await _authService.RevogarTodosRefreshTokensAsync(usuarioId);
-            
-            if (!result)
-            {
-                return BadRequest(new { 
-                    message = "Erro ao revogar tokens",
-                    success = false 
-                });
-            }
-
-            return Ok(new { 
-                success = true,
-                message = "Todos os tokens foram revogados com sucesso"
-            });
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao revogar todos os tokens");
-            return StatusCode(500, new { 
-                message = "Erro interno do servidor",
-                success = false 
-            });
-        }
-    }
-
-    #region Métodos Auxiliares
-
-    private int ObterUsuarioId()
-    {
-        var userIdClaim = User.FindFirst("user_id")?.Value ?? User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        
-        if (int.TryParse(userIdClaim, out var userId))
-            return userId;
-            
-        throw new UnauthorizedAccessException("Token inválido - usuário não identificado");
-    }
-
-    private string? ObterEnderecoIp()
-    {
-        // Verificar se há proxy/load balancer
-        var forwarded = Request.Headers["X-Forwarded-For"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(forwarded))
-        {
-            return forwarded.Split(',')[0].Trim();
-        }
-        
-        var realIp = Request.Headers["X-Real-IP"].FirstOrDefault();
-        if (!string.IsNullOrEmpty(realIp))
-        {
-            return realIp;
-        }
-        
-        return Request.HttpContext.Connection.RemoteIpAddress?.ToString();
-    }
-
-    private string? ObterUserAgent()
-    {
-        return Request.Headers.UserAgent.FirstOrDefault();
-    }
-
-    private string ObterTokenAtual()
-    {
-        var authHeader = Request.Headers.Authorization.FirstOrDefault();
-        if (authHeader?.StartsWith("Bearer ") == true)
-        {
-            return authHeader["Bearer ".Length..];
-        }
-        
-        return string.Empty;
-    }
-
-    #endregion
 }

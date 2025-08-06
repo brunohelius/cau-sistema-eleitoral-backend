@@ -10,3 +10,4 @@
 /Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.pdb
 /Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/ref/SistemaEleitoral.Domain.dll
 /Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.csproj.AssemblyReference.cache
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.sourcelink.json

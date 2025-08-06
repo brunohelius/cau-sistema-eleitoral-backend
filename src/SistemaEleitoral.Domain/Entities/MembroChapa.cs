@@ -5,9 +5,9 @@ using SistemaEleitoral.Domain.Exceptions;
 
 namespace SistemaEleitoral.Domain.Entities
 {
-    public class MembroChapa : AuditableEntity
+    public class MembroChapa : BaseEntity
     {
-        public int Id { get; set; }
+        public new int Id { get; set; }
         public int ChapaEleicaoId { get; set; }
         public int ProfissionalId { get; set; }
         public TipoMembroChapa TipoMembro { get; set; }

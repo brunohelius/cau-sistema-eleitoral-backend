@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using SistemaEleitoral.Domain.Interfaces;
 using SistemaEleitoral.Infrastructure.Data;
 using SistemaEleitoral.Domain.Entities;
