@@ -1,0 +1,10 @@
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/SistemaEleitoral.ApiSimple
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/SistemaEleitoral.ApiSimple.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/SistemaEleitoral.ApiSimple.deps.json
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/SistemaEleitoral.ApiSimple.runtimeconfig.json
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/SistemaEleitoral.ApiSimple.pdb
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/Microsoft.AspNetCore.OpenApi.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/Microsoft.OpenApi.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/Swashbuckle.AspNetCore.Swagger.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/Swashbuckle.AspNetCore.SwaggerGen.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.ApiSimple/publish/Swashbuckle.AspNetCore.SwaggerUI.dll

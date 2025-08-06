@@ -1,0 +1,5 @@
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/Debug/net9.0/SistemaEleitoral.Infrastructure.csproj.AssemblyReference.cache
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/Debug/net9.0/SistemaEleitoral.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/Debug/net9.0/SistemaEleitoral.Infrastructure.AssemblyInfoInputs.cache
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/Debug/net9.0/SistemaEleitoral.Infrastructure.AssemblyInfo.cs
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/Debug/net9.0/SistemaEleitoral.Infrastructure.csproj.CoreCompileInputs.cache

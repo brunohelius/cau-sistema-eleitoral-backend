@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "c9QTl8wQT5UVk7QkCGmiMbuioyKz+KpdZcCnvu4IAJE=",
+  "Source": "SistemaEleitoral.ApiSimple",
+  "BasePath": "_content/SistemaEleitoral.ApiSimple",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}

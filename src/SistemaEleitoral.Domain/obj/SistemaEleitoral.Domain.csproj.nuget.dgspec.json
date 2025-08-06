@@ -1,0 +1,78 @@
+{
+  "format": 1,
+  "restore": {
+    "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj": {}
+  },
+  "projects": {
+    "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj",
+        "projectName": "SistemaEleitoral.Domain",
+        "projectPath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj",
+        "packagesPath": "/Users/brunosouza/.nuget/packages/",
+        "outputPath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "/Users/brunosouza/.nuget/NuGet/NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net9.0"
+        ],
+        "sources": {
+          "/opt/homebrew/Cellar/dotnet/9.0.7/libexec/library-packs": {},
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net9.0": {
+            "targetAlias": "net9.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        },
+        "restoreAuditProperties": {
+          "enableAudit": "true",
+          "auditLevel": "low",
+          "auditMode": "direct"
+        },
+        "SdkAnalysisLevel": "9.0.100"
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "dependencies": {
+            "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Extensions.Identity.Core": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/9.0.7/libexec/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

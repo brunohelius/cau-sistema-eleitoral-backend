@@ -1,0 +1,12 @@
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.AssemblyInfoInputs.cache
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.AssemblyInfo.cs
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.csproj.CoreCompileInputs.cache
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/bin/Debug/net9.0/SistemaEleitoral.Domain.deps.json
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/bin/Debug/net9.0/SistemaEleitoral.Domain.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/bin/Debug/net9.0/SistemaEleitoral.Domain.pdb
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/refint/SistemaEleitoral.Domain.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.pdb
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/ref/SistemaEleitoral.Domain.dll
+/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/obj/Debug/net9.0/SistemaEleitoral.Domain.csproj.AssemblyReference.cache

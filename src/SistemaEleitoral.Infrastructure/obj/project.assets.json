@@ -1,0 +1,171 @@
+{
+  "version": 3,
+  "targets": {
+    "net9.0": {}
+  },
+  "libraries": {},
+  "projectFileDependencyGroups": {
+    "net9.0": [
+      "Hangfire.Core >= 1.8.20",
+      "Hangfire.PostgreSql >= 1.20.12",
+      "MailKit >= 4.8.0",
+      "Microsoft.AspNetCore.Authorization >= 9.0.0",
+      "Microsoft.AspNetCore.Identity.EntityFrameworkCore >= 9.0.0",
+      "Microsoft.AspNetCore.SignalR.Core >= 1.1.0",
+      "Microsoft.EntityFrameworkCore >= 9.0.8",
+      "Microsoft.EntityFrameworkCore.Tools >= 9.0.8",
+      "Microsoft.Extensions.Configuration.Abstractions >= 9.0.8",
+      "Microsoft.Extensions.Logging.Abstractions >= 9.0.8",
+      "MimeKit >= 4.8.0",
+      "Npgsql.EntityFrameworkCore.PostgreSQL >= 9.0.1",
+      "Scriban >= 5.11.0",
+      "SendGrid >= 9.29.3",
+      "System.IdentityModel.Tokens.Jwt >= 8.3.0"
+    ]
+  },
+  "packageFolders": {
+    "/Users/brunosouza/.nuget/packages/": {}
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectUniqueName": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/SistemaEleitoral.Infrastructure.csproj",
+      "projectName": "SistemaEleitoral.Infrastructure",
+      "projectPath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/SistemaEleitoral.Infrastructure.csproj",
+      "packagesPath": "/Users/brunosouza/.nuget/packages/",
+      "outputPath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Infrastructure/obj/",
+      "projectStyle": "PackageReference",
+      "configFilePaths": [
+        "/Users/brunosouza/.nuget/NuGet/NuGet.Config"
+      ],
+      "originalTargetFrameworks": [
+        "net9.0"
+      ],
+      "sources": {
+        "/opt/homebrew/Cellar/dotnet/9.0.7/libexec/library-packs": {},
+        "https://api.nuget.org/v3/index.json": {}
+      },
+      "frameworks": {
+        "net9.0": {
+          "targetAlias": "net9.0",
+          "projectReferences": {
+            "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj": {
+              "projectPath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Domain/SistemaEleitoral.Domain.csproj"
+            }
+          }
+        }
+      },
+      "warningProperties": {
+        "warnAsError": [
+          "NU1605"
+        ]
+      },
+      "restoreAuditProperties": {
+        "enableAudit": "true",
+        "auditLevel": "low",
+        "auditMode": "direct"
+      },
+      "SdkAnalysisLevel": "9.0.100"
+    },
+    "frameworks": {
+      "net9.0": {
+        "targetAlias": "net9.0",
+        "dependencies": {
+          "Hangfire.Core": {
+            "target": "Package",
+            "version": "[1.8.20, )"
+          },
+          "Hangfire.PostgreSql": {
+            "target": "Package",
+            "version": "[1.20.12, )"
+          },
+          "MailKit": {
+            "target": "Package",
+            "version": "[4.8.0, )"
+          },
+          "Microsoft.AspNetCore.Authorization": {
+            "target": "Package",
+            "version": "[9.0.0, )"
+          },
+          "Microsoft.AspNetCore.Identity.EntityFrameworkCore": {
+            "target": "Package",
+            "version": "[9.0.0, )"
+          },
+          "Microsoft.AspNetCore.SignalR.Core": {
+            "target": "Package",
+            "version": "[1.1.0, )"
+          },
+          "Microsoft.EntityFrameworkCore": {
+            "target": "Package",
+            "version": "[9.0.8, )"
+          },
+          "Microsoft.EntityFrameworkCore.Tools": {
+            "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+            "suppressParent": "All",
+            "target": "Package",
+            "version": "[9.0.8, )"
+          },
+          "Microsoft.Extensions.Configuration.Abstractions": {
+            "target": "Package",
+            "version": "[9.0.8, )"
+          },
+          "Microsoft.Extensions.Logging.Abstractions": {
+            "target": "Package",
+            "version": "[9.0.8, )"
+          },
+          "MimeKit": {
+            "target": "Package",
+            "version": "[4.8.0, )"
+          },
+          "Npgsql.EntityFrameworkCore.PostgreSQL": {
+            "target": "Package",
+            "version": "[9.0.1, )"
+          },
+          "Scriban": {
+            "target": "Package",
+            "version": "[5.11.0, )"
+          },
+          "SendGrid": {
+            "target": "Package",
+            "version": "[9.29.3, )"
+          },
+          "System.IdentityModel.Tokens.Jwt": {
+            "target": "Package",
+            "version": "[8.3.0, )"
+          }
+        },
+        "imports": [
+          "net461",
+          "net462",
+          "net47",
+          "net471",
+          "net472",
+          "net48",
+          "net481"
+        ],
+        "assetTargetFallback": true,
+        "warn": true,
+        "frameworkReferences": {
+          "Microsoft.NETCore.App": {
+            "privateAssets": "all"
+          }
+        },
+        "runtimeIdentifierGraphPath": "/opt/homebrew/Cellar/dotnet/9.0.7/libexec/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
+      }
+    }
+  },
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Unable to load the service index for source https://api.nuget.org/v3/index.json.\n  nodename nor servname provided, or not known (api.nuget.org:443)\n  nodename nor servname provided, or not known",
+      "libraryId": "MimeKit"
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Unable to load the service index for source https://api.nuget.org/v3/index.json.\n  nodename nor servname provided, or not known (api.nuget.org:443)\n  nodename nor servname provided, or not known",
+      "libraryId": "MailKit"
+    }
+  ]
+}

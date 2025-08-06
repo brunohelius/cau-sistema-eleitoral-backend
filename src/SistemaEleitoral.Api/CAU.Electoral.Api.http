@@ -1,0 +1,6 @@
+@CAU.Electoral.Api_HostAddress = http://localhost:5157
+
+GET {{CAU.Electoral.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

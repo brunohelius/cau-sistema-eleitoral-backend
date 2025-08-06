@@ -1,0 +1,299 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using System.Text;
+using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
+using SistemaEleitoral.Api.Middleware;
+using SistemaEleitoral.Application.Services;
+using SistemaEleitoral.Infrastructure.Data;
+using SistemaEleitoral.Infrastructure.Repositories;
+using SistemaEleitoral.Infrastructure.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .ReadFrom.Configuration(builder.Configuration)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .WriteTo.File("logs/sistema-eleitoral-.log", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+
+builder.Host.UseSerilog();
+
+// Add services to the container
+builder.Services.AddDbContext<ApplicationDbContextMinimal>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.MigrationsAssembly(typeof(ApplicationDbContextMinimal).Assembly.FullName)
+    )
+    .EnableSensitiveDataLogging(builder.Environment.IsDevelopment())
+    .EnableDetailedErrors(builder.Environment.IsDevelopment())
+);
+
+// Configure JWT Authentication
+var jwtSettings = builder.Configuration.GetSection("Jwt");
+var secretKey = jwtSettings["SecretKey"] ?? throw new InvalidOperationException("JWT SecretKey não configurada");
+var issuer = jwtSettings["Issuer"] ?? "SistemaEleitoralCAU";
+var audience = jwtSettings["Audience"] ?? "SistemaEleitoralCAU";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = issuer,
+        ValidAudience = audience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)),
+        ClockSkew = TimeSpan.Zero, // Remove tolerância padrão de 5 minutos
+        
+        // Configurações de segurança adicionais
+        RequireExpirationTime = true,
+        RequireSignedTokens = true,
+        RequireAudience = true
+    };
+
+    // Eventos para logging e validação adicional
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Log.Warning("JWT Authentication failed: {Error}", context.Exception.Message);
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var userId = context.Principal?.FindFirst("user_id")?.Value;
+            Log.Information("JWT Token validated for user: {UserId}", userId);
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            Log.Warning("JWT Challenge: {Error}", context.Error);
+            return Task.CompletedTask;
+        }
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Add Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    // Política geral de autenticação
+    options.AddFixedWindowLimiter("AuthPolicy", rateLimiterOptions =>
+    {
+        var rateLimitConfig = builder.Configuration.GetSection("RateLimiting:AuthPolicy");
+        rateLimiterOptions.Window = TimeSpan.Parse(rateLimitConfig["Window"] ?? "00:01:00");
+        rateLimiterOptions.PermitLimit = int.Parse(rateLimitConfig["PermitLimit"] ?? "10");
+        rateLimiterOptions.QueueLimit = int.Parse(rateLimitConfig["QueueLimit"] ?? "0");
+        rateLimiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+    });
+
+    // Política específica para login
+    options.AddFixedWindowLimiter("LoginPolicy", rateLimiterOptions =>
+    {
+        var rateLimitConfig = builder.Configuration.GetSection("RateLimiting:LoginPolicy");
+        rateLimiterOptions.Window = TimeSpan.Parse(rateLimitConfig["Window"] ?? "00:05:00");
+        rateLimiterOptions.PermitLimit = int.Parse(rateLimitConfig["PermitLimit"] ?? "3");
+        rateLimiterOptions.QueueLimit = int.Parse(rateLimitConfig["QueueLimit"] ?? "0");
+    });
+
+    // Política para refresh token
+    options.AddFixedWindowLimiter("RefreshPolicy", rateLimiterOptions =>
+    {
+        var rateLimitConfig = builder.Configuration.GetSection("RateLimiting:RefreshPolicy");
+        rateLimiterOptions.Window = TimeSpan.Parse(rateLimitConfig["Window"] ?? "00:01:00");
+        rateLimiterOptions.PermitLimit = int.Parse(rateLimitConfig["PermitLimit"] ?? "5");
+        rateLimiterOptions.QueueLimit = int.Parse(rateLimitConfig["QueueLimit"] ?? "0");
+    });
+
+    // Política para recuperação de senha
+    options.AddFixedWindowLimiter("RecoveryPolicy", rateLimiterOptions =>
+    {
+        var rateLimitConfig = builder.Configuration.GetSection("RateLimiting:RecoveryPolicy");
+        rateLimiterOptions.Window = TimeSpan.Parse(rateLimitConfig["Window"] ?? "00:15:00");
+        rateLimiterOptions.PermitLimit = int.Parse(rateLimitConfig["PermitLimit"] ?? "2");
+        rateLimiterOptions.QueueLimit = int.Parse(rateLimitConfig["QueueLimit"] ?? "0");
+    });
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = 429;
+        context.HttpContext.Response.ContentType = "application/json";
+        
+        var response = new 
+        { 
+            success = false,
+            message = "Muitas tentativas. Tente novamente mais tarde.",
+            retryAfter = context.Lease.GetAllMetadata().FirstOrDefault(m => m.Key == "RETRY_AFTER")?.Value
+        };
+        
+        await context.HttpContext.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(response));
+    };
+});
+
+// Register Services
+builder.Services.AddScoped<IJwtService, JwtService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Register Repositories
+builder.Services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+builder.Services.AddScoped<ISessaoLoginRepository, SessaoLoginRepository>();
+builder.Services.AddScoped<ILogUsuarioRepository, LogUsuarioRepository>();
+builder.Services.AddScoped<ISecurityCleanupService, SecurityCleanupService>();
+
+// Add Controllers
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+    });
+
+// Add API Explorer for OpenAPI/Swagger with JWT support
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new() { 
+        Title = "Sistema Eleitoral CAU API", 
+        Version = "v1",
+        Description = "API para o Sistema Eleitoral do CAU (Conselho de Arquitetura e Urbanismo)",
+        Contact = new OpenApiContact
+        {
+            Name = "Equipe CAU",
+            Email = "desenvolvimento@cau.gov.br"
+        }
+    });
+
+    // Configurar autenticação JWT no Swagger
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Description = "JWT Authorization header usando o esquema Bearer. Exemplo: \"Authorization: Bearer {token}\"",
+        Name = "Authorization",
+        In = ParameterLocation.Header,
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
+
+// Add CORS with security configurations
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "http://localhost:4200" };
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("SecurePolicy", policy =>
+    {
+        policy.WithOrigins(allowedOrigins)
+              .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+              .WithHeaders("Content-Type", "Authorization", "X-Requested-With")
+              .AllowCredentials()
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+    });
+});
+
+// Add Health Checks
+builder.Services.AddHealthChecks()
+    .AddNpgSql(builder.Configuration.GetConnectionString("DefaultConnection")!);
+
+var app = builder.Build();
+
+// Configure Security Headers
+app.Use(async (context, next) =>
+{
+    // Security headers
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "DENY");
+    context.Response.Headers.Append("X-XSS-Protection", "1; mode=block");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    context.Response.Headers.Append("Content-Security-Policy", 
+        "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;");
+    
+    // Remove server header
+    context.Response.Headers.Remove("Server");
+    
+    await next();
+});
+
+// Configure the HTTP request pipeline
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sistema Eleitoral CAU API v1");
+        c.RoutePrefix = string.Empty; // Serve Swagger at root
+        c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+        c.DefaultModelsExpandDepth(-1);
+    });
+}
+else
+{
+    // Em produção, force HTTPS
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+
+// Rate limiting deve vir antes de CORS
+app.UseRateLimiter();
+
+app.UseCors("SecurePolicy");
+
+// Middleware personalizado de autorização eleitoral
+app.UseElectoralAuthorization();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.MapHealthChecks("/health");
+
+// Log application startup
+Log.Information("Sistema Eleitoral CAU API iniciado - Ambiente: {Environment}", app.Environment.EnvironmentName);
+
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Falha crítica na inicialização da aplicação");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

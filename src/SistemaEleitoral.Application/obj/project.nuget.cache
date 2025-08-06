@@ -1,0 +1,21 @@
+{
+  "version": 2,
+  "dgSpecHash": "cODUq2n83/s=",
+  "success": false,
+  "projectFilePath": "/Users/brunosouza/Documents/Development/AI POC/eleitoral-react-net-v2/backend/src/SistemaEleitoral.Application/SistemaEleitoral.Application.csproj",
+  "expectedPackageFiles": [],
+  "logs": [
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Unable to load the service index for source https://api.nuget.org/v3/index.json.\n  nodename nor servname provided, or not known (api.nuget.org:443)\n  nodename nor servname provided, or not known",
+      "libraryId": "MimeKit"
+    },
+    {
+      "code": "NU1301",
+      "level": "Error",
+      "message": "Unable to load the service index for source https://api.nuget.org/v3/index.json.\n  nodename nor servname provided, or not known (api.nuget.org:443)\n  nodename nor servname provided, or not known",
+      "libraryId": "MailKit"
+    }
+  ]
+}

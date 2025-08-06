@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "QAaABmbANtOtr08L+Lw1QbBygh32pn6fdTgXeSrFskY=",
+  "Source": "CAU.Electoral.API",
+  "BasePath": "_content/CAU.Electoral.API",
+  "Mode": "Default",
+  "ManifestType": "Publish",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
